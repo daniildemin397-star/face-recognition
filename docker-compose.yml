@@ -1,0 +1,105 @@
+version: '3.8'
+
+services:
+  # PostgreSQL база данных
+  postgres:
+    image: postgres:15-alpine
+    container_name: face_recognition_db
+    environment:
+      POSTGRES_USER: faceuser
+      POSTGRES_PASSWORD: facepass
+      POSTGRES_DB: facedb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faceuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - face_net
+
+  # Redis для кэширования
+  redis:
+    image: redis:7-alpine
+    container_name: face_recognition_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - face_net
+
+  # Go API сервер
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: face_recognition_api
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_PORT=8080
+      - SERVER_HOST=0.0.0.0
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=faceuser
+      - DB_PASSWORD=facepass
+      - DB_NAME=facedb
+      - DB_SSLMODE=disable
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - PYTHON_BASE_URL=http://python:5000
+      - GIN_MODE=release
+    volumes:
+      - ./uploads:/app/uploads
+      - ./results:/app/results
+      - ./web:/app/web
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      python:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - face_net
+
+  # Python обработчик
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    container_name: face_recognition_python
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - WORKERS=4
+    volumes:
+      - ./python:/app
+      - ./uploads:/app/temp_uploads:ro
+    restart: unless-stopped
+    networks:
+      - face_net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  face_net:
+    driver: bridge

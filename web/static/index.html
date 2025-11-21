@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition System Pro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* Header с вкладками */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2em;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-card {
+            padding: 10px 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card .label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* Табы */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 12px 30px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Контент вкладок */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Зона загрузки */
+        .upload-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-zone.dragover {
+            border-color: #4CAF50;
+            background: #e8f5e9;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        /* Кнопки */
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        /* Превью */
+        .preview-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+
+        .preview-item .remove {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+        }
+
+        /* Статус */
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status.processing {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            display: block;
+        }
+
+        .status.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            display: block;
+        }
+
+        /* Поиск */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* Список людей */
+        .persons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .person-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .person-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .person-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .person-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .person-badge {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .person-images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .person-images img {
+            width: 100%;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .person-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-images img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        /* Лоадер */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Форма редактирования */
+        .edit-form {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .edit-form input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        /* Пустое состояние */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>🎭 Face Recognition System</h1>
+            <p style="color: #666; margin-top: 5px;">Умная система распознавания лиц</p>
+        </div>
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="number" id="statPersons">0</div>
+                <div class="label">Людей</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="statFaces">0</div>
+                <div class="label">Лиц</div>
+            </div>
+            <div class="stat-card">
+                <div class="number" id="statTasks">0</div>
+                <div class="label">Задач</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Табы -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('upload')">📤 Загрузка</button>
+        <button class="tab" onclick="switchTab('database')">👥 База данных</button>
+        <button class="tab" onclick="switchTab('search')">🔍 Поиск</button>
+    </div>
+
+    <!-- Вкладка: Загрузка -->
+    <div class="tab-content active" id="tab-upload">
+        <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📸</div>
+            <h3>Перетащите фото сюда или нажмите для выбора</h3>
+            <p style="color: #999; margin-top: 10px;">JPG, PNG (максимум 100 файлов)</p>
+            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+        </div>
+
+        <div class="preview-container" id="previewContainer"></div>
+
+        <button class="btn" id="processBtn" style="display: none;">
+            🚀 Обработать и сохранить в БД
+        </button>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <!-- Вкладка: База данных -->
+    <div class="tab-content" id="tab-database">
+        <h2 style="margin-bottom: 20px;">👥 Все люди в базе данных</h2>
+        <div class="persons-grid" id="personsGrid">
+            <!-- Карточки людей будут здесь -->
+        </div>
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="icon">😕</div>
+            <h3>База данных пуста</h3>
+            <p>Загрузите фотографии для начала работы</p>
+        </div>
+    </div>
+
+    <!-- Вкладка: Поиск -->
+    <div class="tab-content" id="tab-search">
+        <h2 style="margin-bottom: 20px;">🔍 Поиск людей</h2>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Введите имя или ID...">
+            <button class="btn btn-small" onclick="performSearch()">Найти</button>
+        </div>
+        <div class="persons-grid" id="searchResults">
+            <!-- Результаты поиска -->
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра человека -->
+<div class="modal" id="personModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalPersonName">Person Name</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+
+        <div class="edit-form">
+            <input type="text" id="editNameInput" placeholder="Новое имя">
+            <button class="btn btn-small" onclick="updatePersonName()">💾 Сохранить</button>
+            <button class="btn btn-small btn-danger" onclick="deletePerson()">🗑️ Удалить</button>
+        </div>
+
+        <h3 style="margin-top: 20px;">Все фотографии (<span id="modalFacesCount">0</span>)</h3>
+        <div class="modal-images" id="modalImages">
+            <!-- Изображения -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ============
+    let selectedFiles = [];
+    let currentTaskId = null;
+    let currentPersonId = null;
+    const API_URL = 'http://localhost:8080/api';
+
+    // ============ ИНИЦИАЛИЗАЦИЯ ============
+    document.addEventListener('DOMContentLoaded', () => {
+        loadStats();
+        setupUploadHandlers();
+
+        // Автообновление статистики каждые 10 секунд
+        setInterval(loadStats, 10000);
+    });
+
+    // ============ ТАБЫ ============
+    function switchTab(tabName) {
+        // Скрываем все вкладки
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Показываем выбранную
+        document.getElementById(`tab-${tabName}`).classList.add('active');
+        event.target.classList.add('active');
+
+        // Загружаем данные для вкладки
+        if (tabName === 'database') {
+            loadAllPersons();
+        }
+    }
+
+    // ============ СТАТИСТИКА ============
+    async function loadStats() {
+        try {
+            const response = await fetch(`${API_URL}/stats`);
+            const stats = await response.json();
+
+            document.getElementById('statPersons').textContent = stats.total_persons;
+            document.getElementById('statFaces').textContent = stats.total_faces;
+            document.getElementById('statTasks').textContent = stats.total_tasks;
+        } catch (error) {
+            console.error('Ошибка загрузки статистики:', error);
+        }
+    }
+
+    // ============ ЗАГРУЗКА ФАЙЛОВ ============
+    function setupUploadHandlers() {
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        document.getElementById('processBtn').addEventListener('click', processImages);
+    }
+
+    function handleFiles(files) {
+        selectedFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+        if (selectedFiles.length === 0) {
+            alert('Выберите хотя бы одно изображение!');
+            return;
+        }
+
+        const previewContainer = document.getElementById('previewContainer');
+        previewContainer.innerHTML = '';
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'preview-item';
+                div.innerHTML = `
+                        <img src="${e.target.result}" alt="${file.name}">
+                        <button class="remove" onclick="removeFile(${index})">×</button>
+                    `;
+                previewContainer.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        document.getElementById('processBtn').style.display = 'block';
+    }
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        if (selectedFiles.length > 0) {
+            handleFiles(selectedFiles);
+        } else {
+            document.getElementById('previewContainer').innerHTML = '';
+            document.getElementById('processBtn').style.display = 'none';
+        }
+    }
+
+    // ============ ОБРАБОТКА ИЗОБРАЖЕНИЙ ============
+    async function processImages() {
+        if (selectedFiles.length === 0) return;
+
+        const processBtn = document.getElementById('processBtn');
+        processBtn.disabled = true;
+        processBtn.textContent = '⏳ Обработка...';
+
+        showStatus('processing', `Загрузка ${selectedFiles.length} фотографий...`);
+
+        const formData = new FormData();
+        selectedFiles.forEach(file => formData.append('images', file));
+
+        try {
+            const response = await fetch(`${API_URL}/upload`, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.task_id) {
+                currentTaskId = data.task_id;
+                showStatus('processing', 'Распознавание лиц и сохранение в БД...');
+                checkTaskStatus(data.task_id);
+            }
+        } catch (error) {
+            showStatus('error', `Ошибка: ${error.message}`);
+            processBtn.disabled = false;
+            processBtn.textContent = '🚀 Обработать и сохранить в БД';
+        }
+    }
+
+    function checkTaskStatus(taskId) {
+        const interval = setInterval(async () => {
+            try {
+                const response = await fetch(`${API_URL}/task/${taskId}`);
+                const task = await response.json();
+
+                if (task.status === 'completed') {
+                    clearInterval(interval);
+                    showStatus('success', `✅ Готово! Найдено ${task.total_faces} лиц, ${task.unique_persons} уникальных людей`);
+
+                    document.getElementById('processBtn').disabled = false;
+                    document.getElementById('processBtn').textContent = '🚀 Обработать новые фотографии';
+
+                    loadStats();
+
+                    // Предлагаем перейти к базе данных
+                    setTimeout(() => {
+                        if (confirm('Хотите посмотреть результаты в базе данных?')) {
+                            switchTab('database');
+                            document.querySelector('.tab:nth-child(2)').click();
+                        }
+                    }, 1000);
+                } else if (task.status === 'failed') {
+                    clearInterval(interval);
+                    showStatus('error', `❌ Ошибка: ${task.error_message}`);
+                    document.getElementById('processBtn').disabled = false;
+                    document.getElementById('processBtn').textContent = '🚀 Попробовать снова';
+                }
+            } catch (error) {
+                clearInterval(interval);
+                showStatus('error', `Ошибка проверки статуса: ${error.message}`);
+            }
+        }, 2000);
+    }
+
+    function showStatus(type, message) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.className = `status ${type}`;
+        statusDiv.innerHTML = type === 'processing'
+            ? `<div class="loader"></div><p>${message}</p>`
+            : `<p>${message}</p>`;
+    }
+
+    // ============ БАЗА ДАННЫХ ============
+    async function loadAllPersons() {
+        try {
+            const response = await fetch(`${API_URL}/persons`);
+            const persons = await response.json();
+
+            const grid = document.getElementById('personsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (persons.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            grid.innerHTML = persons.map(person => createPersonCard(person)).join('');
+        } catch (error) {
+            console.error('Ошибка загрузки людей:', error);
+        }
+    }
+
+    function createPersonCard(person) {
+        // Создаем превью первого лица если есть
+        let imagePreview = '';
+        if (person.faces_count > 0) {
+            // Будет показываться при открытии модального окна
+            imagePreview = `<div class="person-image-placeholder">📷 ${person.faces_count} фото</div>`;
+        }
+
+        return `
+                <div class="person-card" onclick="openPersonModal(${person.id})">
+                    ${imagePreview}
+                    <div class="person-card-header">
+                        <div class="person-name">${person.name}</div>
+                        <div class="person-badge">${person.faces_count} фото</div>
+                    </div>
+                    <p style="color: #999; font-size: 0.9em;">
+                        ID: ${person.id} • Добавлен: ${new Date(person.created_at).toLocaleDateString('ru')}
+                    </p>
+                </div>
+            `;
+    }
+
+    // ============ МОДАЛЬНОЕ ОКНО ============
+    async function openPersonModal(personId) {
+        currentPersonId = personId;
+
+        try {
+            const response = await fetch(`${API_URL}/persons/${personId}`);
+            const person = await response.json();
+
+            document.getElementById('modalPersonName').textContent = person.name;
+            document.getElementById('editNameInput').value = person.name;
+            document.getElementById('modalFacesCount').textContent = person.faces.length;
+
+            const modalImages = document.getElementById('modalImages');
+
+            if (person.faces.length === 0) {
+                modalImages.innerHTML = '<p style="color: #999;">Нет фотографий</p>';
+            } else {
+                // Отображаем аннотированные изображения (с рамками)
+                modalImages.innerHTML = person.faces.map((face, index) => {
+                    // Используем annotated_image (с рамками) если есть
+                    const imagePath = face.annotated_image || face.original_image;
+                    // Путь уже относительный от uploads/, просто добавляем префикс
+                    const imageUrl = `/uploads/${imagePath}`;
+
+                    console.log(`Face ${index}:`, {
+                        original: face.original_image,
+                        annotated: face.annotated_image,
+                        url: imageUrl
+                    });
+
+                    return `
+                            <div style="position: relative;">
+                                <img src="${imageUrl}"
+                                     alt="${person.name}"
+                                     onerror="console.error('Image load error:', this.src); this.style.border='2px solid red';"
+                                     title="Confidence: ${(face.confidence * 100).toFixed(1)}%"
+                                     style="cursor: pointer;"
+                                     onclick="window.open('${imageUrl}', '_blank')">
+                                <div style="position: absolute; bottom: 5px; right: 5px;
+                                           background: rgba(0,0,0,0.7); color: white;
+                                           padding: 2px 6px; border-radius: 3px; font-size: 11px;">
+                                    ${(face.confidence * 100).toFixed(0)}%
+                                </div>
+                                <div style="position: absolute; top: 5px; left: 5px;
+                                           background: rgba(0,0,0,0.7); color: white;
+                                           padding: 2px 6px; border-radius: 3px; font-size: 10px;">
+                                    ${face.face_width}×${face.face_height}px
+                                </div>
+                            </div>
+                        `;
+                }).join('');
+            }
+
+            document.getElementById('personModal').classList.add('active');
+        } catch (error) {
+            alert('Ошибка загрузки данных: ' + error.message);
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('personModal').classList.remove('active');
+    }
+
+    async function updatePersonName() {
+        const newName = document.getElementById('editNameInput').value.trim();
+
+        if (!newName) {
+            alert('Введите имя!');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/persons/${currentPersonId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            });
+
+            if (response.ok) {
+                alert('Имя обновлено!');
+                document.getElementById('modalPersonName').textContent = newName;
+                loadAllPersons();
+                loadStats();
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    }
+
+    async function deletePerson() {
+        if (!confirm('Удалить этого человека и все его фото?')) return;
+
+        try {
+            const response = await fetch(`${API_URL}/persons/${currentPersonId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                alert('Человек удален');
+                closeModal();
+                loadAllPersons();
+                loadStats();
+            }
+        } catch (error) {
+            alert('Ошибка: ' + error.message);
+        }
+    }
+
+    // ============ ПОИСК ============
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') performSearch();
+    });
+
+    async function performSearch() {
+        const query = document.getElementById('searchInput').value.trim();
+
+        if (!query) {
+            alert('Введите запрос для поиска!');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/search?q=${encodeURIComponent(query)}`);
+            const persons = await response.json();
+
+            const resultsDiv = document.getElementById('searchResults');
+
+            if (persons.length === 0) {
+                resultsDiv.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><h3>Ничего не найдено</h3></div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = persons.map(person => createPersonCard(person)).join('');
+        } catch (error) {
+            alert('Ошибка поиска: ' + error.message);
+        }
+    }
+
+    // Закрытие модального окна по клику вне его
+    document.getElementById('personModal').addEventListener('click', (e) => {
+        if (e.target.id === 'personModal') closeModal();
+    });
+</script>
+</body>
+</html>

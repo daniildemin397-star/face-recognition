@@ -1,0 +1,7 @@
+scipy==1.16.3
+opencv-python==4.12.0.88
+insightface==0.7.3
+numpy>=2.2.6
+scikit-learn==1.7.2
+onnxruntime==1.23.2
+flask==3.1.2
