@@ -156,7 +156,7 @@ face-recognition/
 
 ```bash
 # 1. Клонируй репозиторий
-git clone https://github.com/your-username/face-recognition.git
+git clone https://github.com/daniildemin397-star/face-recognition.git
 cd face-recognition
 
 # 2. Запусти все сервисы
